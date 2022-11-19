@@ -1,8 +1,12 @@
-use std::net::TcpListener;
+use std::net::{SocketAddr};
 use zero2prod::run;
+use tracing_subscriber;
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
-    let address = TcpListener::bind("127.0.0.1:8000")?;
-    run(address)?.await
+async fn main() -> anyhow::Result<()> {
+    // initialize tracing
+    tracing_subscriber::fmt::init();
+
+    let address = SocketAddr::from(([0,0,0,0], 8080));
+    run(address).await
 }
