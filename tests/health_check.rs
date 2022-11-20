@@ -1,31 +1,34 @@
+use axum::body::Body;
+use axum::http::{Request, StatusCode};
 use std::net::TcpListener;
-use zero2prod::run;
+use tower::ServiceExt;
+use zero2prod::{new_router, run};
 
 fn spawn_app() -> String {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
-    // We retrieve the port assigned to us by the OS
-    let port = listener.local_addr().unwrap().port();
-    let server = run(listener).expect("Failed to bind address");
-    let _ = tokio::spawn(server);
-    // We return the application address to the caller!
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    let port = addr.port();
+
+    let server = run(addr);
+    let _ = tokio::spawn(async move { server.await.expect("Failed to start HTTP server") });
+
     format!("http://127.0.0.1:{}", port)
 }
 
 #[tokio::test]
 async fn health_check_works() {
-    // Arrange
-    let address = spawn_app();
-    let client = reqwest::Client::new();
-
-    // Act
-    let response = client
-        // Use the returned application address
-        .get(&format!("{}/health_check", &address))
-        .send()
+    let response = new_router()
+        .oneshot(
+            Request::builder()
+                .uri("/health_check")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
-        .expect("Failed to execute request.");
+        .expect("Failed to create request");
 
     // Assert
-    assert!(response.status().is_success());
-    assert_eq!(Some(0), response.content_length());
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+    assert_eq!(&body[..], b"OK");
 }

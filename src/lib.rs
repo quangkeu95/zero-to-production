@@ -1,20 +1,33 @@
-use std::net::{SocketAddr};
 use anyhow::Context;
 use axum::response::IntoResponse;
-use axum::{Json, Router};
 use axum::routing::get;
+use axum::{Json, Router};
+use std::net::SocketAddr;
 use tokio::signal;
-use tracing::{info};
+use tracing::info;
+
+pub mod error;
 
 async fn health_check() -> impl IntoResponse {
-    Json("OK".to_owned())
+    "OK"
+}
+
+async fn ping() -> impl IntoResponse {
+    "pong"
+}
+
+pub fn new_router() -> Router {
+    let app = Router::new()
+        .route("/", get(ping))
+        .route("/health_check", get(health_check));
+    app
 }
 
 pub async fn run(addr: SocketAddr) -> anyhow::Result<()> {
     // build our application with a single route
-    let app = Router::new().route("/health_check", get(health_check));
+    let app = new_router();
 
-    info!("Starting HTTP server at {:?}", &addr);
+    println!("Starting HTTP server at {:?}", &addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
