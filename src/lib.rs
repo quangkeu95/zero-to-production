@@ -1,31 +1,33 @@
 use anyhow::Context;
+use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::routing::get;
-use axum::{Json, Router};
+use axum::routing::{get, post};
+use axum::{Extension, Form, Json, Router};
+use sqlx::PgPool;
 use std::net::SocketAddr;
 use tokio::signal;
 use tracing::info;
 
+pub mod configuration;
 pub mod error;
-
-async fn health_check() -> impl IntoResponse {
-    "OK"
-}
+pub mod routes;
 
 async fn ping() -> impl IntoResponse {
     "pong"
 }
 
-pub fn new_router() -> Router {
+pub fn new_router(db: PgPool) -> Router {
     let app = Router::new()
         .route("/", get(ping))
-        .route("/health_check", get(health_check));
+        .route("/health_check", get(routes::health_check))
+        .route("/subscriptions", post(routes::subscriptions))
+        .layer(Extension(db));
     app
 }
 
-pub async fn run(addr: SocketAddr) -> anyhow::Result<()> {
+pub async fn run(addr: SocketAddr, db: PgPool) -> anyhow::Result<()> {
     // build our application with a single route
-    let app = new_router();
+    let app = new_router(db);
 
     println!("Starting HTTP server at {:?}", &addr);
     axum::Server::bind(&addr)

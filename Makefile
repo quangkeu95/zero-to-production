@@ -1,2 +1,2 @@
 watch-with-test:
-	cargo watch -x check -x test -x run
+	RUST_LOG=debug cargo watch -x check -x test -x run
