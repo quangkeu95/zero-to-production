@@ -1,18 +1,23 @@
 use anyhow::Context;
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
-use tracing_subscriber;
-use zero2prod::configuration::get_configuration;
-use zero2prod::run;
 use std::time::Duration;
+use tracing::log::LevelFilter;
+use zero2prod::configuration::get_configuration;
+use zero2prod::{run, telemetry};
 
 const DB_MAX_CONNECTIONS: u32 = 100;
 const DB_MAX_LIFETIME: Duration = Duration::from_secs(3);
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let tracing_options = telemetry::TracingOptionsBuilder::default()
+        .crate_level(LevelFilter::Debug)
+        // .tower_http_level(LevelFilter::Debug)
+        .build()?;
+
     // initialize tracing
-    tracing_subscriber::fmt::init();
+    telemetry::init_tracing("zero2prod".into(), tracing_options);
 
     let configuration = get_configuration()
         .context("Error parsing configuration")

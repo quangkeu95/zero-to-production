@@ -6,11 +6,13 @@ use axum::{Extension, Form, Json, Router};
 use sqlx::PgPool;
 use std::net::SocketAddr;
 use tokio::signal;
+use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
 use tracing::info;
 
 pub mod configuration;
 pub mod error;
 pub mod routes;
+pub mod telemetry;
 
 async fn ping() -> impl IntoResponse {
     "pong"
@@ -21,6 +23,7 @@ pub fn new_router(db: PgPool) -> Router {
         .route("/", get(ping))
         .route("/health_check", get(routes::health_check))
         .route("/subscriptions", post(routes::subscriptions))
+        .layer(TraceLayer::new_for_http())
         .layer(Extension(db));
     app
 }
@@ -29,7 +32,7 @@ pub async fn run(addr: SocketAddr, db: PgPool) -> anyhow::Result<()> {
     // build our application with a single route
     let app = new_router(db);
 
-    println!("Starting HTTP server at {:?}", &addr);
+    info!("Starting HTTP server at {:?}", &addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
