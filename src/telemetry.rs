@@ -1,3 +1,5 @@
+use std::{env::VarError, str::FromStr};
+
 use derive_builder::Builder;
 use tracing::log::LevelFilter;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
@@ -32,4 +34,18 @@ pub fn init_tracing(crate_name: String, options: TracingOptions) {
         .with(JsonStorageLayer)
         .with(formatting_layer)
         .init();
+}
+
+pub fn parse_log_level(
+    env_var: Result<String, VarError>,
+    default_value_opt: Option<LevelFilter>,
+) -> LevelFilter {
+    let default_value = default_value_opt.unwrap_or_else(|| LevelFilter::Off);
+    match env_var {
+        Ok(log_level) => match LevelFilter::from_str(log_level.as_str()) {
+            Ok(filter_level) => filter_level,
+            Err(_) => default_value,
+        },
+        Err(_) => default_value,
+    }
 }
