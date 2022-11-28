@@ -8,20 +8,23 @@ struct AnyError(anyhow::Error);
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error(transparent)]
+    ConfigError(#[from] config::ConfigError),
+    #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
 
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        match self {
-            AppError::Other(err) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Something went wrong, {}", err),
-            )
-                .into_response(),
-        }
-    }
-}
+// impl IntoResponse for AppError {
+//     fn into_response(self) -> Response {
+//         match self {
+//             AppError::Other(err) => (
+//                 StatusCode::INTERNAL_SERVER_ERROR,
+//                 format!("Something went wrong, {}", err),
+//             )
+//                 .into_response(),
+//             AppError::ConfigError(_) => todo!(),
+//         }
+//     }
+// }
 
 impl<E> From<E> for AnyError
 where

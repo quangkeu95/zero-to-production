@@ -1,0 +1,18 @@
+version: "3.5"
+services:
+  app:
+    container_name: zero2prod
+    # image: zero2prod
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    restart: on-failure
+    ports:
+      - '8000:8000'
+    volumes:
+      - zero2prod:/app
+    env_file:
+      - .env.deployment
+volumes:
+  zero2prod:
+    driver: local

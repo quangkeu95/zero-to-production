@@ -34,6 +34,7 @@ test-context = "0.1.4"
 async-trait = "0.1.58"
 dotenvy = "0.15.6"
 secrecy = { version = "0.8.0", features = ["serde"] }
+serde-aux = "4.1.2"
 
 [dependencies.sqlx]
 version = "0.6"
@@ -44,7 +45,7 @@ features = [
     "postgres",
     "uuid",
     "chrono",
-    "migrate"]
+    "migrate", "offline"]
 
 [dev-dependencies]
 reqwest = "0.11"

@@ -62,7 +62,7 @@ impl TestApp {
         let connection = PgPoolOptions::new()
             .max_connections(10)
             .acquire_timeout(Duration::from_secs(10))
-            .connect(&self.settings.connection_string_without_db().expose_secret())
+            .connect_with(self.settings.without_db())
             .await
             .expect("Failed to connect to Postgres");
         let _ = connection
@@ -100,7 +100,7 @@ impl AsyncTestContext for TestApp {
 
 async fn configure_database(settings: &DatabaseSettings) -> PgPool {
     let connection = PgPoolOptions::new()
-        .connect(&settings.connection_string_without_db().expose_secret())
+        .connect_with(settings.without_db())
         .await
         .expect("Failed to connect to Postgres");
     connection
@@ -112,7 +112,7 @@ async fn configure_database(settings: &DatabaseSettings) -> PgPool {
 
     let return_connection = PgPoolOptions::new()
         .max_connections(10)
-        .connect(&settings.connection_string().expose_secret())
+        .connect_with(settings.with_db())
         .await
         .expect("Failed to connect to Postgres");
 
