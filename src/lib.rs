@@ -1,4 +1,5 @@
 use anyhow::Context;
+use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
@@ -10,6 +11,7 @@ use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
 use tracing::info;
 
 pub mod configuration;
+pub mod domain;
 pub mod error;
 pub mod routes;
 pub mod telemetry;
@@ -24,7 +26,7 @@ pub fn new_router(db: PgPool) -> Router {
         .route("/health_check", get(routes::health_check))
         .route("/subscriptions", post(routes::subscriptions))
         .layer(TraceLayer::new_for_http())
-        .layer(Extension(db));
+        .with_state(db);
     app
 }
 

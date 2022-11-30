@@ -185,6 +185,9 @@ async fn subscribe_returns_a_422_when_data_is_missing(app: &mut TestApp) {
         ("name=le%20guin", "missing the email"),
         ("email=ursula_le_guin%40gmail.com", "missing the name"),
         ("", "missing both name and email"),
+        ("name=&email=ursula_le_guin%40gmail.com", "empty name"),
+        ("name=Ursula&email=", "empty email"),
+        ("name=Ursula&email=definitely-not-an-email", "invalid email"),
     ];
 
     for (invalid_body, error_message) in test_cases {
@@ -202,7 +205,7 @@ async fn subscribe_returns_a_422_when_data_is_missing(app: &mut TestApp) {
             .await
             .expect("Failed to call api");
 
-        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         // assert_eq!(response.body(), error_message);
     }
 }
